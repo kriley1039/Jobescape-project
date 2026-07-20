@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Variance Calculator</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card-bg: #ffffff;
+    --border: #e2e5ea;
+    --text: #1c2230;
+    --text-muted: #6b7280;
+    --accent: #2563eb;
+    --green-bg: #e8f7ee;
+    --green-text: #1a7f4e;
+    --yellow-bg: #fef6e0;
+    --yellow-text: #8a6300;
+    --red-bg: #fdecec;
+    --red-text: #b91c1c;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 2.5rem 1.25rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    margin: 0 0 0.25rem;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    margin: 0 0 2rem;
+    font-size: 0.95rem;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+  }
+
+  .card h2 {
+    margin: 0 0 1.25rem;
+    font-size: 1.1rem;
+  }
+
+  .inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+  }
+
+  input {
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--text);
+    background: #fbfbfc;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+  }
+
+  .results {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .result-box {
+    background: #fafbfc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.9rem;
+    text-align: center;
+  }
+
+  .result-box .label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.35rem;
+  }
+
+  .result-box .value {
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+
+  .status-flag {
+    display: inline-block;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .status-good { background: var(--green-bg); color: var(--green-text); }
+  .status-warn { background: var(--yellow-bg); color: var(--yellow-text); }
+  .status-bad  { background: var(--red-bg); color: var(--red-text); }
+
+  @media (max-width: 480px) {
+    .inputs, .results { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Variance Calculator</h1>
+<p class="subtitle">Track budget and schedule variance at a glance</p>
+
+<div class="container">
+
+  <div class="card">
+    <h2>Budget</h2>
+    <div class="inputs">
+      <div>
+        <label for="plannedCost">Planned Cost ($)</label>
+        <input type="number" id="plannedCost" placeholder="e.g. 10000" step="any">
+      </div>
+      <div>
+        <label for="actualCost">Actual Cost ($)</label>
+        <input type="number" id="actualCost" placeholder="e.g. 11500" step="any">
+      </div>
+    </div>
+    <div class="results">
+      <div class="result-box">
+        <div class="label">Dollar Variance</div>
+        <div class="value" id="dollarVariance">—</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Percent Variance</div>
+        <div class="value" id="percentVariance">—</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Status</div>
+        <div class="value"><span class="status-flag" id="budgetStatus">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Schedule</h2>
+    <div class="inputs">
+      <div>
+        <label for="plannedFinish">Planned Finish Date</label>
+        <input type="date" id="plannedFinish">
+      </div>
+      <div>
+        <label for="forecastFinish">Forecast Finish Date</label>
+        <input type="date" id="forecastFinish">
+      </div>
+    </div>
+    <div class="results">
+      <div class="result-box" style="grid-column: span 1;">
+        <div class="label">Days Ahead / Behind</div>
+        <div class="value" id="daysVariance">—</div>
+      </div>
+      <div class="result-box" style="grid-column: span 2;">
+        <div class="label">Status</div>
+        <div class="value"><span class="status-flag" id="scheduleStatus">—</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const plannedCostEl = document.getElementById('plannedCost');
+  const actualCostEl = document.getElementById('actualCost');
+  const dollarVarianceEl = document.getElementById('dollarVariance');
+  const percentVarianceEl = document.getElementById('percentVariance');
+  const budgetStatusEl = document.getElementById('budgetStatus');
+
+  const plannedFinishEl = document.getElementById('plannedFinish');
+  const forecastFinishEl = document.getElementById('forecastFinish');
+  const daysVarianceEl = document.getElementById('daysVariance');
+  const scheduleStatusEl = document.getElementById('scheduleStatus');
+
+  const currencyFmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+
+  function setFlag(el, text, cls) {
+    el.textContent = text;
+    el.className = 'status-flag ' + cls;
+  }
+
+  function updateBudget() {
+    const planned = parseFloat(plannedCostEl.value);
+    const actual = parseFloat(actualCostEl.value);
+
+    if (isNaN(planned) || isNaN(actual) || planned === 0) {
+      dollarVarianceEl.textContent = '—';
+      percentVarianceEl.textContent = '—';
+      setFlag(budgetStatusEl, '—', '');
+      budgetStatusEl.style.background = 'transparent';
+      budgetStatusEl.style.color = 'inherit';
+      return;
+    }
+
+    const dollarVariance = planned - actual;
+    const percentVariance = (dollarVariance / planned) * 100;
+
+    dollarVarianceEl.textContent = (dollarVariance >= 0 ? '+' : '−') + currencyFmt.format(Math.abs(dollarVariance)).replace('$', '$');
+    percentVarianceEl.textContent = (percentVariance >= 0 ? '+' : '') + percentVariance.toFixed(1) + '%';
+
+    // Overspend is negative variance (actual > planned)
+    const overspendPercent = -percentVariance;
+
+    if (overspendPercent <= 5) {
+      setFlag(budgetStatusEl, 'On Budget', 'status-good');
+    } else if (overspendPercent <= 10) {
+      setFlag(budgetStatusEl, 'At Risk', 'status-warn');
+    } else {
+      setFlag(budgetStatusEl, 'Over Budget', 'status-bad');
+    }
+  }
+
+  function parseLocalDate(value) {
+    if (!value) return null;
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  function updateSchedule() {
+    const planned = parseLocalDate(plannedFinishEl.value);
+    const forecast = parseLocalDate(forecastFinishEl.value);
+
+    if (!planned || !forecast) {
+      daysVarianceEl.textContent = '—';
+      setFlag(scheduleStatusEl, '—', '');
+      scheduleStatusEl.style.background = 'transparent';
+      scheduleStatusEl.style.color = 'inherit';
+      return;
+    }
+
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const diffDays = Math.round((forecast - planned) / msPerDay);
+
+    if (diffDays === 0) {
+      daysVarianceEl.textContent = 'On time';
+    } else if (diffDays < 0) {
+      daysVarianceEl.textContent = Math.abs(diffDays) + ' day' + (Math.abs(diffDays) === 1 ? '' : 's') + ' ahead';
+    } else {
+      daysVarianceEl.textContent = diffDays + ' day' + (diffDays === 1 ? '' : 's') + ' behind';
+    }
+
+    if (diffDays <= 0) {
+      setFlag(scheduleStatusEl, 'On Schedule', 'status-good');
+    } else if (diffDays <= 7) {
+      setFlag(scheduleStatusEl, 'At Risk', 'status-warn');
+    } else {
+      setFlag(scheduleStatusEl, 'Behind Schedule', 'status-bad');
+    }
+  }
+
+  [plannedCostEl, actualCostEl].forEach(el => el.addEventListener('input', updateBudget));
+  [plannedFinishEl, forecastFinishEl].forEach(el => el.addEventListener('input', updateSchedule));
+</script>
+
+</body>
+</html>
